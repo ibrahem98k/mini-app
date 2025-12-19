@@ -31,6 +31,20 @@
     });
   }
 
+  function getAuthCode() {
+    my.getAuthCode({
+      scopes: ['auth_base'],
+      success: (res) => {
+        my.alert({
+          content: res.authCode,
+        });
+      },
+      fail: (res) => {
+        console.log(res.authErrorScopes);
+      },
+    });
+  }
+
   function submit(e) {
     e.preventDefault();
     error = '';
@@ -139,6 +153,8 @@
       <div class="spacer"></div>
 
       <button class="btn btn-primary" type="submit">إرسال الطلب</button>
+      <div class="spacer"></div>
+      <button class="btn" type="button" on:click={getAuthCode}>الحصول على رمز المصادقة</button>
     </form>
   </div>
 </div>
