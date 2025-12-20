@@ -11,7 +11,7 @@
     error = '';
     
     my.getAuthCode({
-      scopes: ['auth_base'],
+      scopes: ['auth_base',"USER_ID"],
       success: async (res) => {
         try {
           const authResult = await authenticateWithToken(res.authCode);
