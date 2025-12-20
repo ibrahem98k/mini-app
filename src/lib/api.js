@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://server.mouamle.space:19990/api';
+const API_BASE_URL = 'https://its.mouamle.space/api';
 
 export async function authenticateWithMiniApps(token) {
   try {
