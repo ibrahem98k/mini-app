@@ -3,7 +3,7 @@
   import CategoryPicker from './CategoryPicker.svelte';
   import { requests, makeId } from '../stores/requests';
   import { getCategory } from '../lib/categories';
-  import { currentUser } from '../stores/auth';
+  import { currentUser, authenticateWithToken } from '../stores/auth';
 
   export let preselectedCategory = '';
 
@@ -16,6 +16,7 @@
   let category = preselectedCategory || '';
   let photos = [];
   let error = '';
+  let authLoading = false;
 
   const dispatch = createEventDispatcher();
 
@@ -34,13 +35,39 @@
   function getAuthCode() {
     my.getAuthCode({
       scopes: ['auth_base'],
-      success: (res) => {
-        my.alert({
-          content: res.authCode,
-        });
+      success: async (res) => {
+        authLoading = true;
+        error = '';
+        
+        try {
+          const authResult = await authenticateWithToken(res.authCode);
+          
+          if (authResult.ok) {
+            my.alert({
+              content: 'تم تسجيل الدخول بنجاح!',
+            });
+            // Form will auto-update with user data via the reactive statement
+          } else {
+            error = authResult.error || 'فشل تسجيل الدخول';
+            my.alert({
+              content: error,
+            });
+          }
+        } catch (err) {
+          error = 'حدث خطأ أثناء المصادقة';
+          my.alert({
+            content: error,
+          });
+        } finally {
+          authLoading = false;
+        }
       },
       fail: (res) => {
         console.log(res.authErrorScopes);
+        error = 'فشل الحصول على رمز المصادقة';
+        my.alert({
+          content: error,
+        });
       },
     });
   }
@@ -154,7 +181,9 @@
 
       <button class="btn btn-primary" type="submit">إرسال الطلب</button>
       <div class="spacer"></div>
-      <button class="btn" type="button" on:click={getAuthCode}>الحصول على رمز المصادقة</button>
+      <button class="btn" type="button" on:click={getAuthCode} disabled={authLoading}>
+        {authLoading ? 'جاري المصادقة...' : 'الحصول على رمز المصادقة'}
+      </button>
     </form>
   </div>
 </div>

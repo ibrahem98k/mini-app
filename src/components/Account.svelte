@@ -5,7 +5,7 @@
 
   const dispatch = createEventDispatcher();
 
-  function onSuccess() {
+  function onSuccess(e) {
     dispatch('loggedIn');
   }
 </script>

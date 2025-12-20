@@ -1,4 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
+import { authenticateWithMiniApps } from '../lib/api.js';
 
 const USERS_KEY = 'siyanati_users_v1';
 const SESSION_KEY = 'siyanati_session_v1';
@@ -74,4 +75,46 @@ export async function login({ identifier, password }) {
 
 export function logout() {
   session.set(null);
+}
+
+export async function authenticateWithToken(token) {
+  const result = await authenticateWithMiniApps(token);
+  
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+
+  const userData = result.data;
+  
+  // Create or update user in local store based on MiniApps response
+  const usersList = get(users);
+  let existingUser = usersList.find(u => u.miniAppsId === userData.id || u.phone === userData.phone);
+  
+  if (existingUser) {
+    // Update existing user with latest MiniApps data
+    users.update(arr => arr.map(u => 
+      u.id === existingUser.id 
+        ? { ...u, ...userData, miniAppsId: userData.id, lastLogin: new Date().toISOString() }
+        : u
+    ));
+    session.set({ userId: existingUser.id });
+    return { ok: true, user: { ...existingUser, ...userData } };
+  } else {
+    // Create new user from MiniApps data
+    const newUser = {
+      id: makeId(),
+      miniAppsId: userData.id,
+      name: userData.name || 'مستخدم ميني أبس',
+      phone: userData.phone || '',
+      email: userData.email || null,
+      passwordHash: null, // No password for MiniApps users
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
+      ...userData
+    };
+    
+    users.update(arr => [newUser, ...arr]);
+    session.set({ userId: newUser.id });
+    return { ok: true, user: newUser };
+  }
 }
