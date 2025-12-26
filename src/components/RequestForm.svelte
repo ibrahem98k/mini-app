@@ -20,6 +20,7 @@
   let authLoading = false;
   let showPaymentModal = false;
   let newRequestId = '';
+  let submitted = false;
   const SERVICE_FEE_IQD = 5000;
 
   const dispatch = createEventDispatcher();
@@ -100,7 +101,7 @@
     };
     requests.addRequest(data);
     newRequestId = data.id;
-    showPaymentModal = true;
+    submitted = true;
     name = '';
     phone = '';
     city = '';
@@ -110,6 +111,10 @@
     category = preselectedCategory || '';
     photos = [];
     dispatch('submitted', { request: data });
+  }
+
+  function openPayment() {
+    showPaymentModal = true;
   }
 
   // Prefill from current user if present
@@ -191,6 +196,13 @@
         {authLoading ? 'جاري المصادقة...' : 'الحصول على رمز المصادقة'}
       </button>
     </form>
+    {#if submitted}
+      <div class="card" style="margin-top:12px; text-align:center;">
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">تم إرسال طلبك بنجاح!</div>
+        <div style="font-size: 14px; color: var(--muted); margin-bottom: 16px;">الرسوم: {new Intl.NumberFormat('ar-IQ', { style: 'currency', currency: 'IQD' }).format(SERVICE_FEE_IQD)}</div>
+        <button class="btn btn-primary" on:click={openPayment}>ادفع الآن</button>
+      </div>
+    {/if}
   </div>
 </div>
 
