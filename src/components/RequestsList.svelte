@@ -2,6 +2,7 @@
   import { requests } from '../stores/requests';
   import { categories } from '../lib/categories';
   import { currentUser } from '../stores/auth';
+  import PaymentModal from './PaymentModal.svelte';
 
   let statusFilter = 'all';
   let categoryFilter = 'all';
@@ -25,6 +26,15 @@
     if (s === 'in_progress') return 'جاري التنفيذ';
     if (s === 'completed') return 'مكتمل';
     return s;
+  }
+
+  let showPaymentModal = false;
+  let selectedRequestId = '';
+  const SERVICE_FEE_IQD = 5000;
+
+  function openPayment(requestId) {
+    selectedRequestId = requestId;
+    showPaymentModal = true;
   }
 </script>
 
@@ -85,14 +95,17 @@
         <div class="small">الموقع: {r.city}{r.city && r.address ? ' - ' : ''}{r.address}</div>
       {/if}
 
-      <div class="row">
+      <div class="row" style="grid-template-columns: 1fr auto auto;">
         <select class="select" on:change={(e)=>requests.updateStatus(r.id, e.target.value)}>
           <option value="pending" selected={r.status==='pending'}>قيد المراجعة</option>
           <option value="in_progress" selected={r.status==='in_progress'}>جاري التنفيذ</option>
           <option value="completed" selected={r.status==='completed'}>مكتمل</option>
         </select>
+        <button class="btn btn-primary" on:click={() => openPayment(r.id)}>الدفع</button>
         <button class="btn btn-danger" on:click={() => requests.remove(r.id)}>حذف</button>
       </div>
     </div>
   {/each}
 </div>
+
+<PaymentModal bind:show={showPaymentModal} requestId={selectedRequestId} fee={SERVICE_FEE_IQD} />
