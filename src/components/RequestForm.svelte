@@ -117,6 +117,10 @@
     showPaymentModal = true;
   }
 
+  function skipPayment() {
+    submitted = false;
+  }
+
   // Prefill from current user if present
   $: if ($currentUser) {
     if (!name) name = $currentUser.name || '';
@@ -200,7 +204,10 @@
       <div class="card" style="margin-top:12px; text-align:center;">
         <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">تم إرسال طلبك بنجاح!</div>
         <div style="font-size: 14px; color: var(--muted); margin-bottom: 16px;">الرسوم: {new Intl.NumberFormat('ar-IQ', { style: 'currency', currency: 'IQD' }).format(SERVICE_FEE_IQD)}</div>
-        <button class="btn btn-primary" on:click={openPayment}>ادفع الآن</button>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button class="btn btn-primary" on:click={openPayment}>ادفع الآن</button>
+          <button class="btn" on:click={skipPayment}>تخطي الدفع</button>
+        </div>
       </div>
     {/if}
   </div>
