@@ -1,6 +1,7 @@
 <script>
   import { createEventDispatcher } from 'svelte';
   import CategoryPicker from './CategoryPicker.svelte';
+  import PaymentModal from './PaymentModal.svelte';
   import { requests, makeId } from '../stores/requests';
   import { getCategory } from '../lib/categories';
   import { currentUser, authenticateWithToken } from '../stores/auth';
@@ -17,6 +18,9 @@
   let photos = [];
   let error = '';
   let authLoading = false;
+  let showPaymentModal = false;
+  let newRequestId = '';
+  const SERVICE_FEE_IQD = 5000;
 
   const dispatch = createEventDispatcher();
 
@@ -95,6 +99,8 @@
       createdAt: new Date().toISOString()
     };
     requests.addRequest(data);
+    newRequestId = data.id;
+    showPaymentModal = true;
     name = '';
     phone = '';
     city = '';
@@ -187,3 +193,5 @@
     </form>
   </div>
 </div>
+
+<PaymentModal bind:show={showPaymentModal} requestId={newRequestId} fee={SERVICE_FEE_IQD} />
