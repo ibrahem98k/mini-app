@@ -1,4 +1,5 @@
 <script>
+  import { session } from '../stores/auth';
   export let show = false;
   export let requestId = '';
   export let fee = 0;
@@ -19,14 +20,48 @@
     return `https://www.wallet.com/cashier?orderId=${encodeURIComponent(orderId)}`;
   }
 
+  async function getAuthToken() {
+    try {
+      if ($session?.authToken) return $session.authToken;
+      if ($session?.token) return $session.token;
+      if (typeof my !== 'undefined' && my && typeof my.getAuthCode === 'function') {
+        return await new Promise((resolve) => {
+          my.getAuthCode({
+            scopes: ['auth_base'],
+            success: (res) => resolve(res.authCode || ''),
+            fail: () => resolve('')
+          });
+        });
+      }
+    } catch (e) {}
+    return '';
+  }
+
   async function pay() {
     loading = true;
     error = '';
-    const paymentUrl = await getPaymentUrl(requestId);
+    let url = '';
+    const token = await getAuthToken();
+    try {
+      const res = await fetch('https://its.mouamle.space/api/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && (data.url || data.paymentUrl || data.redirectUrl)) {
+          url = data.url || data.paymentUrl || data.redirectUrl;
+        }
+      }
+    } catch (e) {}
+    if (!url) url = await getPaymentUrl(requestId);
     if (typeof my !== 'undefined' && my && typeof my.tradePay === 'function') {
       try {
         my.tradePay({
-          paymentUrl,
+          paymentUrl: url,
           success: (res) => {
             alert(JSON.stringify(res));
             close();
@@ -39,7 +74,7 @@
         return;
       } catch (e) {}
     }
-    window.location.href = paymentUrl;
+    window.location.href = url;
   }
 
   function close() {
@@ -49,13 +84,15 @@
   }
 
   function handleKeydown(e) {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape' && show) close();
   }
 </script>
 
+<svelte:window on:keydown={handleKeydown} />
 {#if show}
-  <button class="modal-backdrop" type="button" aria-label="Close modal" on:click={close} on:keydown={handleKeydown}>
-    <div class="modal" role="dialog" aria-modal="true" tabindex="-1" on:click|stopPropagation>
+  <div class="modal-root">
+    <button class="modal-backdrop" type="button" aria-label="Close modal" on:click={close}></button>
+    <div class="modal" role="dialog" aria-modal="true" tabindex="-1">
       <div class="modal-header">
         <h2>الدفع</h2>
         <button class="close-btn" type="button" on:click={close}>×</button>
@@ -76,21 +113,29 @@
         </button>
       </div>
     </div>
-  </button>
+  </div>
 {/if}
 
 <style>
-  .modal-backdrop {
+  .modal-root {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
     border: none;
     padding: 0;
     margin: 0;
@@ -104,6 +149,8 @@
     max-width: 360px;
     width: 90%;
     box-shadow: var(--shadow);
+    position: relative;
+    z-index: 1001;
   }
 
   .modal-header {

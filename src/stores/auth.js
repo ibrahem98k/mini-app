@@ -97,7 +97,11 @@ export async function authenticateWithToken(token) {
         ? { ...u, ...userData, miniAppsId: userData.id, lastLogin: new Date().toISOString() }
         : u
     ));
-    session.set({ userId: existingUser.id });
+    session.set({ 
+      userId: existingUser.id,
+      token: userData?.token || null,
+      authToken: userData?.authToken || null
+    });
     return { ok: true, user: { ...existingUser, ...userData } };
   } else {
     // Create new user from MiniApps data
@@ -114,7 +118,11 @@ export async function authenticateWithToken(token) {
     };
     
     users.update(arr => [newUser, ...arr]);
-    session.set({ userId: newUser.id });
+    session.set({ 
+      userId: newUser.id,
+      token: userData?.token || null,
+      authToken: userData?.authToken || null
+    });
     return { ok: true, user: newUser };
   }
 }
